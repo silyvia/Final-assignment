@@ -16,25 +16,41 @@
  - [FAQ](#faq)
   
 <!-- PROJECT DESCRIPTION -->
-# 📖 Data Fundamentals final project-E-learning platform data base <a name="about-project"></a>
-This project models a **E-learning platform database**while demonstrating **admin and user roles** using  **Roles Level Security (RSL)** in supabase.
-## 🛠 Built With <a name="built-with"></a>   
+# 📖 Data Fundamentals final project-E-learning platform data base <a name="about-project"></a
+💡 About the Project
+This project models an E-Learning Platform database while demonstrating administrative and user security using Row Level Security (RLS) in Supabase (PostgreSQL).
+## 🛠 Built With <a name="built-with"></a> 
+
+Supabase Dashboard – SQL editor & authentication.
+
+PostgreSQL – Database and tables.
+
+RLS Policies & Functions – To enforce student/admin restrictions.
 <!-- Features -->
 ### Key Features <a name="key-features"></a>
-- []**Tables**
-- []**Schema**
-- []**Acess control**
+ -   Key Features Showcased:
+
+✅ UUID-based User Authentication (linked with Supabase Auth).
+
+✅ Admin vs. Student Roles with least privilege enforcement.
+
+✅ Granular CRUD (Create, Read, Update, Delete) control via RLS policies.
+
+✅ A tested SQL script to validate roles and policies.
+
+✅ Output from Supabase based on roles and policies.
+
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 <!-- GETTING STARTED -->
 ## 💻 Getting Started <a name="getting-started"></a>
-To rebuild DB,follow these steps.
-
+Getting Started
 ### Prerequisites
- To run this project, you need:
-- [supabase account](https://supabase.com/)
-- [knowledge of SQL commands](https://WWW.W3schools.com/sql/)
-- A schema for creating tables in the DB.
+- A Supabase account (https://supabase.com/)and project.
+- PostgreSQL basics knowledge(https://WWW.W3schools.com/sql/)
+-Git installed.
+
+
 
 <!--###Setup -->
 ### Setup
@@ -43,124 +59,96 @@ To rebuild DB,follow these steps.
   
 
 --->
-### Install
-Install this project with:
-<```Provision Database: Create a new project instance within the Supabase dashboard.>
 
-<```Locate Script: The full database schema and sample data are contained in the schema.sql file.>
+Open your Supabase SQL Editor.
 
+Run your schema SQL to create tables (users, courses, enrollments, submissions) and sample data.
+
+Apply UUID & RLS Setup:
+```sql
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE courses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE enrollments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE submissions ENABLE ROW LEVEL SECURITY;
+```
 --->
-<!--###DB Creation--->
-### DB Schema
-To run the project, execute the following command:
-```sql
--- E-learning Platform Database Schema (Week 1)
--- Tables: students, courses, enrollments
 
--- 1. Create the students Table
--- Stores user/student profile data.
-CREATE TABLE public.students (
-    student_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    student_name TEXT NOT NULL,
-    email TEXT UNIQUE NOT NULL,
-    major TEXT, -- e.g., 'Computer Science', 'Data Analytics'
-    registration_date DATE DEFAULT CURRENT_DATE
+Apply the User (Student) and Admin policies detailed below.
+
+💻 Sample SQL Queries & Policies
+
+1.User Policies (Student Role)
+Students have restricted access, primarily focused on their own enrollment and submissions, and published course content.
+```sql
+- 1. Policy to allow a student to view their own enrollment records.
+-- Enforcement: The user's UUID (auth.uid()) must match the user_uuid column in the enrollment record.
+CREATE POLICY "students_can_view_own_enrollments"
+ON public.enrollments
+FOR SELECT
+TO authenticated
+USING (auth.uid() = user_uuid);
+```
+```sql
+-- 2. Policy to allow a student to insert submissions linked to their own ID.
+-- Enforcement: The new row being inserted must have a student_uuid that matches the user's UUID (auth.uid()).
+CREATE POLICY "students_can_insert_own_submissions"
+ON public.submissions
+FOR INSERT
+TO authenticated
+WITH CHECK (auth.uid() = student_uuid);
+```
+```sql
+-- 3. Policy to allow a student to read all published courses.
+-- Enforcement: The course's 'is_published' column must be TRUE. No ownership check is required.
+CREATE POLICY "students_can_read_published_courses"
+ON public.courses
+FOR SELECT
+TO authenticated
+USING (is_published = TRUE);
+
+```
+2.Admin policies
+```sql
+- Admins manage all enrollments 
+CREATE POLICY "admins_manage_all_enrollments"
+ON public.enrollments
+FOR ALL
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 FROM public.users 
+    WHERE user_uuid = auth.uid() AND role = 'admin'
+  )
 );
 ```
-
--- Insert 6 rows of sample student data
-INSERT INTO public.students (student_name, email, major)
-VALUES 
-    ('Sarah Kamau', 'sarah.k@email.com', 'Data Analytics'),
-    ('David Omondi', 'david.o@email.com', 'Web Development'),
-    ('Aisha Gichuru', 'aisha.g@email.com', 'Marketing'),
-    ('John Mburu', 'john.m@email.com', 'Computer Science'),
-    ('Emily Wanjiku', 'emily.w@email.com', 'Data Analytics'),
-    ('Peter Ndungâ€™u', 'peter.n@email.com', 'Web Development');
-
-```
 ```sql
--- 2. Create the courses Table
--- Stores the course catalog.
-CREATE TABLE public.courses (
-    course_id INT PRIMARY KEY,
-    course_name TEXT UNIQUE NOT NULL, -- e.g., 'Intro to SQL', 'Advanced Python'
-    instructor TEXT NOT NULL,
-    credits NUMERIC(2, 1) -- Course credit hours (e.g., 3.0)
+-- Admins manage all course content 
+CREATE POLICY "admins_manage_all_courses"
+ON public.courses
+FOR ALL
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 FROM public.users 
+    WHERE user_uuid = auth.uid() AND role = 'admin'
+  )
 );
-
--- Insert 6 rows of sample course data
-INSERT INTO public.courses (course_id, course_name, instructor, credits)
-VALUES 
-    (101, 'Introduction to SQL', 'Dr. Mwangi', 3.0),
-    (102, 'Data Modeling Fundamentals', 'Prof. Adisa', 4.0),
-    (103, 'Python for Beginners', 'Ms. Chepkoech', 3.0),
-    (104, 'Cloud Computing Basics', 'Mr. Kioko', 2.0),
-    (105, 'Web Design Principles', 'Dr. Mwangi', 3.0),
-    (106, 'Advanced Data Visualization', 'Prof. Adisa', 4.0);
 ```
+👤 User Roles and Output
+Student Enroll in a Course (INSERT)
+User only policy enforced: Must provide own user_uuid.
 ```sql
-
--- 3. Create the enrollments Table (The central linking table)
--- Records which student is taking which course.
-CREATE TABLE public.enrollments (
-    enrollment_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    
-    -- FOREIGN KEY 1: Links to the student
-    student_id UUID REFERENCES public.students(student_id) ON DELETE CASCADE, 
-    
-    -- FOREIGN KEY 2: Links to the course
-    course_id INT REFERENCES public.courses(course_id) ON DELETE RESTRICT,
-    
-    enrollment_date DATE DEFAULT CURRENT_DATE,
-    grade_received TEXT -- e.g., 'A', 'B+', 'In Progress'
-);
-
--- Insert 6 rows of sample enrollment data
-INSERT INTO public.enrollments (student_id, course_id, grade_received)
-VALUES 
-    ((SELECT student_id FROM public.students WHERE student_name = 'Sarah Kamau'), (SELECT course_id FROM public.courses WHERE course_name = 'Data Modeling Fundamentals'), 'B+'),
-    ((SELECT student_id FROM public.students WHERE student_name = 'David Omondi'), (SELECT course_id FROM public.courses WHERE course_name = 'Web Design Principles'), 'A'),
-    ((SELECT student_id FROM public.students WHERE student_name = 'Aisha Gichuru'), (SELECT course_id FROM public.courses WHERE course_name = 'Introduction to SQL'), 'A-'),
-    ((SELECT student_id FROM public.students WHERE student_name = 'John Mburu'), (SELECT course_id FROM public.courses WHERE course_name = 'Cloud Computing Basics'), 'In Progress'),
-    ((SELECT student_id FROM public.students WHERE student_name = 'Sarah Kamau'), (SELECT course_id FROM public.courses WHERE course_name = 'Advanced Data Visualization'), 'B'),
-    ((SELECT student_id FROM public.students WHERE student_name = 'Peter Ndungâ€™u'), (SELECT course_id FROM public.courses WHERE course_name = 'Python for Beginners'), 'In Progress');
-
-   
+INSERT INTO enrollments (course_id, user_uuid)
+VALUES ('course-A-uuid', 'd2d53804-5827-4f73-bfd5-41d83d53762f');
 ```
--The tables should look like this in Supabase:
-Enrollment
-<img width="1912" height="835" alt="image" src="https://github.com/user-attachments/assets/aff01f98-52d9-4906-ac4e-b41183a9ec36" />
-
-courses
-<img width="1911" height="782" alt="image" src="https://github.com/user-attachments/assets/bee139b6-0c64-40a4-95ed-b305ad861b36" />
-
-Students
-
-<img width="1916" height="755" alt="image" src="https://github.com/user-attachments/assets/4316746e-a05b-4bed-9ee5-df935ac733e0" />
-
-
--To test the tables, I used two queries:
+Student View Own Submissions (SELECT)
+RLS filters results to only show submissions where student_uuid matches auth.uid()
 ```sql
- select * from students
+SELECT title, grade
+FROM submissions
+WHERE student_uuid = 'd2d53804-5827-4f73-bfd5-41d83d53762f';
 ```
-```sql
-select*
-from students
-where major='Data analytics'
-```
--Here are results of the queries:
-**All students**
-<img width="1576" height="705" alt="image" src="https://github.com/user-attachments/assets/a3beb5df-857a-4e94-9f0e-f6f24414a2ef" />
-
-**All students majoring in Data Analytics**
-<img width="1898" height="568" alt="image" src="https://github.com/user-attachments/assets/5d9e427f-7fad-40ed-a67a-6538e52e4037" />
-
-
-### ERD DIAGRAM
--The ERD screenshot from Supabase looks like this:
-
-<img width="915" height="580" alt="image" src="https://github.com/user-attachments/assets/27028d25-16e1-44a5-b460-6e4e9e889933" />
+<!---
 
 
  

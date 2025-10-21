@@ -13,7 +13,7 @@
 - [🤝 Contributing](#contributing)
 - [⭐️ Show your support](#support)
 - [🙏 Acknowledgements](#acknowledgements)
- - [FAQ](#faq)
+- FAQ 
   
 <!-- PROJECT DESCRIPTION -->
 # 📖 Data Fundamentals final project-E-learning platform data base <a name="about-project"></a
@@ -163,11 +163,8 @@ Feel free to check the [issues page](../../issues/).
 >I would like to thank my instructor and the Supabase team for providing the tools and guidance necessary for this project. 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
   ## ❓FAQ (OPTIONAL) <a name="faq"></a>
-- **Why is enrollment aseparate table?**
-  <``This is necessary because the relationship between students and courses is Many-to-Many (one student takes many courses, and one course has many students). The enrollments table acts as a junction to manage this relationship.>
-- **How can i see a student's full course load?]**
-  - ** You must use a 3-table JOIN query between students, courses, and enrollments, linked by their respective IDs.
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+- **How do i test RSL policies?**
+-Sign in as Users Vs Admin and try CRUD operations.Policies will restrict or allow users accordingly.  
 
 
 

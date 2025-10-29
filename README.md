@@ -134,6 +134,11 @@ USING (
 );
 ```
 
+## Output screenshot.
+
+<img width="1833" height="920" alt="image" src="https://github.com/user-attachments/assets/491b8648-1733-47f1-ad8e-a5c083dcd9cf" />
+
+
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 <!-- AUTHORS -->
